@@ -1,260 +1,211 @@
-import { Activity, Trophy } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Code2, Copy, Users } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
-import { useMemo } from 'react';
-import { buildSubmissionOverview } from '@/lib/problem-community';
+import { Button } from '@/components/ui/button';
+import { useClipboard } from '@/hooks/use-clipboard';
 import type { ProblemSummary } from '@/types';
-import type {
-    SubmissionOverview,
-    SubmissionStatus,
-} from '@/lib/problem-community';
-import {
-    BarChart,
-    ChartCard,
-    PanelHeader,
-    StatCard,
-} from '@/components/problems/panel-ui';
 
-const statusStyles: Record<SubmissionStatus, string> = {
-    Accepted:
-        'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30',
-    'Wrong Answer':
-        'bg-rose-500/10 text-rose-700 dark:text-rose-400 border-rose-500/30',
-    'Time Limit Exceeded':
-        'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30',
-    'Memory Limit Exceeded':
-        'bg-violet-500/10 text-violet-700 dark:text-violet-400 border-violet-500/30',
-    'Runtime Error':
-        'bg-sky-500/10 text-sky-700 dark:text-sky-400 border-sky-500/30',
-    'Compile Error':
-        'bg-slate-500/10 text-slate-700 dark:text-slate-300 border-slate-500/30',
+export type UserCodeSubmission = {
+    id: number;
+    user_id?: number;
+    user_name: string;
+    username: string;
+    language: string;
+    code: string;
+    score?: number | null;
+    created_at: string;
 };
 
-const statusDotColors: Record<SubmissionStatus, string> = {
-    Accepted: 'bg-emerald-500',
-    'Wrong Answer': 'bg-rose-500',
-    'Time Limit Exceeded': 'bg-amber-500',
-    'Memory Limit Exceeded': 'bg-violet-500',
-    'Runtime Error': 'bg-sky-500',
-    'Compile Error': 'bg-slate-500',
-};
+function getInitials(name: string): string {
+    return name
+        .split(/[\s_]+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? '')
+        .join('');
+}
 
-export function SubmissionsPanel({ problem }: { problem: ProblemSummary }) {
-    const overview: SubmissionOverview = useMemo(
-        () => buildSubmissionOverview(problem),
-        [problem],
-    );
-
+export function SubmissionsPanel({
+    problem,
+    submissions = [],
+}: {
+    problem: ProblemSummary;
+    submissions?: UserCodeSubmission[];
+}) {
     return (
         <div className="space-y-6">
-            <PanelHeader
-                icon={Activity}
-                title="Submissions"
-                description="A sample of how submissions and runtimes look once the online judge is connected."
-                badge="Sample data"
-            />
-
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    label="Total submissions"
-                    value={overview.total.toLocaleString()}
-                    hint="Across all accepted languages"
-                />
-                <StatCard
-                    label="Accepted"
-                    value={`${overview.acceptance.toFixed(1)}%`}
-                    hint={`${overview.accepted.toLocaleString()} accepted`}
-                    accent
-                />
-                <StatCard
-                    label="Median runtime"
-                    value={`${overview.medianRuntime} ms`}
-                    hint="Among accepted submissions"
-                />
-                <StatCard
-                    label="Fastest"
-                    value={`${overview.bestRuntime} ms`}
-                    hint="Top accepted submission"
-                />
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
-                <ChartCard
-                    title="Runtime distribution"
-                    description="Accepted submissions grouped by runtime."
-                >
-                    <BarChart
-                        data={overview.runtimeBuckets.map((bucket) => ({
-                            label: bucket.label,
-                            value: bucket.count.toLocaleString(),
-                            percent: bucket.percent,
-                        }))}
-                        tone="sky"
-                    />
-                </ChartCard>
-
-                <ChartCard
-                    title="Status breakdown"
-                    description="All submissions by final verdict."
-                >
-                    <div className="flex h-3 overflow-hidden rounded-full bg-muted">
-                        {overview.statuses.map((status) => (
-                            <div
-                                key={status.status}
-                                className={cn(
-                                    'h-full',
-                                    statusDotColors[status.status],
-                                )}
-                                style={{
-                                    width: `${Math.max(0, status.percent)}%`,
-                                }}
-                                title={`${status.status}: ${status.count}`}
-                            />
-                        ))}
+            {/* Header */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b pb-4">
+                <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                        <Users className="size-5" />
                     </div>
-                    <ul className="mt-4 space-y-2">
-                        {overview.statuses.map((status) => (
-                            <li
-                                key={status.status}
-                                className="flex items-center justify-between gap-3 text-xs"
-                            >
-                                <div className="flex items-center gap-2">
-                                    <span
-                                        className={cn(
-                                            'size-2 rounded-full',
-                                            statusDotColors[status.status],
-                                        )}
-                                    />
-                                    <span className="font-medium">
-                                        {status.status}
-                                    </span>
-                                </div>
-                                <span className="text-muted-foreground tabular-nums">
-                                    {status.count.toLocaleString()} ·{' '}
-                                    {status.percent.toFixed(1)}%
-                                </span>
-                            </li>
-                        ))}
-                    </ul>
-                </ChartCard>
-            </div>
+                    <div>
+                        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+                            C++ Submissions ({submissions.length})
+                        </h2>
+                        <p className="text-xs text-muted-foreground">
+                            Working C++ implementations submitted by users for {problem.title}.
+                        </p>
+                    </div>
+                </div>
 
-            <section className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-base font-semibold">
-                        Top accepted submissions
-                    </h3>
-                    <Badge variant="secondary" className="text-[11px]">
-                        Fastest runtimes
+                <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 font-mono text-xs text-emerald-600 dark:text-emerald-400">
+                        C++ 20 Exclusive
                     </Badge>
                 </div>
+            </div>
 
-                <div className="overflow-x-auto rounded-xl border bg-card">
-                    <table className="w-full min-w-[680px] text-sm">
-                        <thead className="border-b bg-muted/40 text-xs text-muted-foreground">
-                            <tr>
-                                <th className="px-4 py-2.5 text-left font-medium">
-                                    Rank
-                                </th>
-                                <th className="px-4 py-2.5 text-left font-medium">
-                                    User
-                                </th>
-                                <th className="px-4 py-2.5 text-left font-medium">
-                                    Language
-                                </th>
-                                <th className="px-4 py-2.5 text-right font-medium">
-                                    Runtime
-                                </th>
-                                <th className="px-4 py-2.5 text-right font-medium">
-                                    Memory
-                                </th>
-                                <th className="px-4 py-2.5 text-left font-medium">
-                                    Submitted
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y">
-                            {overview.top.map((submission) => (
-                                <tr
-                                    key={`${submission.rank}-${submission.user}`}
-                                    className="transition-colors hover:bg-muted/30"
-                                >
-                                    <td className="px-4 py-2.5 font-mono text-xs tabular-nums">
-                                        #{submission.rank}
-                                    </td>
-                                    <td className="px-4 py-2.5">
-                                        <div className="flex items-center gap-2">
-                                            <span className="font-medium">
-                                                {submission.user}
-                                            </span>
-                                            <Badge
-                                                variant="outline"
-                                                className={cn(
-                                                    'text-[10px]',
-                                                    statusStyles[
-                                                        submission.status
-                                                    ],
-                                                )}
-                                            >
-                                                {submission.status}
-                                            </Badge>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-2.5 text-xs text-muted-foreground">
-                                        {submission.language}
-                                    </td>
-                                    <td className="px-4 py-2.5 text-right font-mono tabular-nums">
-                                        {submission.runtime} ms
-                                    </td>
-                                    <td className="px-4 py-2.5 text-right font-mono text-muted-foreground tabular-nums">
-                                        {submission.memory.toFixed(1)} MB
-                                    </td>
-                                    <td className="px-4 py-2.5 text-xs text-muted-foreground">
-                                        {submission.submitted}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
+            {/* Submissions List */}
+            {submissions.length === 0 ? (
+                <div className="rounded-xl border border-dashed p-10 text-center">
+                    <Code2 className="mx-auto size-8 text-muted-foreground/60" />
+                    <h3 className="mt-2 text-sm font-semibold text-foreground">
+                        No submissions yet
+                    </h3>
+                    <p className="mt-1 text-xs text-muted-foreground">
+                        Be the first to submit a C++ solution for this problem!
+                    </p>
                 </div>
-            </section>
-
-            <section className="space-y-3">
-                <h3 className="text-base font-semibold">Language usage</h3>
-                <div className="grid gap-3 sm:grid-cols-3">
-                    {overview.languages.map((language) => (
-                        <div
-                            key={language.name}
-                            className="rounded-lg border bg-card/40 p-3"
-                        >
-                            <div className="flex items-center justify-between gap-2">
-                                <span className="text-sm font-medium">
-                                    {language.name}
-                                </span>
-                                <span className="text-xs text-muted-foreground tabular-nums">
-                                    {language.percent.toFixed(0)}%
-                                </span>
-                            </div>
-                            <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
-                                <div
-                                    className="h-full rounded-full bg-primary"
-                                    style={{
-                                        width: `${language.percent}%`,
-                                    }}
-                                />
-                            </div>
-                            <p className="mt-2 text-xs text-muted-foreground tabular-nums">
-                                {language.count.toLocaleString()} submissions
-                            </p>
-                        </div>
+            ) : (
+                <div className="space-y-5">
+                    {submissions.map((sub) => (
+                        <UserSubmissionCard key={sub.id} submission={sub} />
                     ))}
                 </div>
-            </section>
-
-            <p className="text-xs text-muted-foreground">
-                <Trophy className="mr-1 inline size-3.5 align-middle" />
-                Submission data is illustrative until the judge is connected.
-            </p>
+            )}
         </div>
+    );
+}
+
+function UserSubmissionCard({ submission }: { submission: UserCodeSubmission }) {
+    const [copiedText, copy] = useClipboard();
+    const [isExpanded, setIsExpanded] = useState(false);
+    const copied = copiedText === submission.code && submission.code !== '';
+
+    const lines = useMemo(
+        () => submission.code.split('\n'),
+        [submission.code],
+    );
+    const isLong = lines.length > 18;
+    const displayedCode =
+        isLong && !isExpanded
+            ? lines.slice(0, 18).join('\n')
+            : submission.code;
+
+    const formattedDate = useMemo(() => {
+        try {
+            return new Date(submission.created_at).toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+            });
+        } catch {
+            return '';
+        }
+    }, [submission.created_at]);
+
+    return (
+        <article className="overflow-hidden rounded-xl border bg-card shadow-xs transition-colors">
+            {/* User & Meta Header */}
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b bg-muted/20 px-4 py-3 sm:px-5">
+                <div className="flex items-center gap-3">
+                    <Avatar className="size-8 border">
+                        <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                            {getInitials(submission.user_name)}
+                        </AvatarFallback>
+                    </Avatar>
+
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-foreground">
+                                {submission.user_name}
+                            </span>
+                            <span className="font-mono text-xs text-muted-foreground">
+                                @{submission.username}
+                            </span>
+                        </div>
+                        {formattedDate && (
+                            <p className="text-[11px] text-muted-foreground">
+                                Submitted on {formattedDate}
+                            </p>
+                        )}
+                    </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono text-xs">
+                        C++ 20
+                    </Badge>
+
+                    {submission.score != null && (
+                        <Badge
+                            variant="outline"
+                            className="border-emerald-500/30 bg-emerald-500/10 font-mono text-xs text-emerald-600 dark:text-emerald-400"
+                        >
+                            Score: {Math.round(submission.score)}/100
+                        </Badge>
+                    )}
+
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => void copy(submission.code)}
+                        className="h-8 gap-1.5 px-2.5 text-xs text-muted-foreground hover:text-foreground"
+                        title="Copy code"
+                    >
+                        {copied ? (
+                            <>
+                                <Check className="size-3 text-emerald-500" />
+                                <span className="text-emerald-500">Copied</span>
+                            </>
+                        ) : (
+                            <>
+                                <Copy className="size-3" />
+                                <span>Copy</span>
+                            </>
+                        )}
+                    </Button>
+                </div>
+            </div>
+
+            {/* Code Body */}
+            <div className="relative overflow-x-auto bg-slate-950 p-4 font-mono text-xs leading-6 text-slate-100 sm:text-sm">
+                <pre>
+                    <code>{displayedCode}</code>
+                </pre>
+
+                {isLong && !isExpanded && (
+                    <div className="absolute inset-x-0 bottom-0 flex justify-center bg-linear-to-t from-slate-950 to-transparent p-3 pt-8">
+                        <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => setIsExpanded(true)}
+                            className="h-7 gap-1 rounded-full text-xs shadow-md"
+                        >
+                            <ChevronDown className="size-3.5" />
+                            <span>Show all {lines.length} lines</span>
+                        </Button>
+                    </div>
+                )}
+            </div>
+
+            {isLong && isExpanded && (
+                <div className="border-t border-slate-800 bg-slate-900/60 px-4 py-2 text-center">
+                    <button
+                        type="button"
+                        onClick={() => setIsExpanded(false)}
+                        className="inline-flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200"
+                    >
+                        <ChevronUp className="size-3.5" />
+                        <span>Collapse code</span>
+                    </button>
+                </div>
+            )}
+        </article>
     );
 }

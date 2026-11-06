@@ -3,6 +3,8 @@ import { BookOpen, Cpu, Layers, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { WunderFrame } from '@/components/wunder-frame';
 import { dashboard, login } from '@/routes';
+import { index as learnRoute } from '@/routes/learn';
+import { show as problemRoute } from '@/routes/problems';
 import { index as problemsetRoute } from '@/routes/problemset';
 
 type ProblemDemo = {
@@ -14,23 +16,13 @@ type ProblemDemo = {
 
 const DEMO_PROBLEMS: ProblemDemo[] = [
     {
-        id: 'call-stacks',
-        title: 'Yeah, I know what a call stack is.',
+        id: 'ring-buffer',
+        title: 'Ring Buffer: High-Throughput Lock-Free SPSC Queue',
         subtitle:
-            'Reconstructing function call timings from sampling profiler data',
+            'Fixed-capacity circular buffer with zero allocations on the hot path',
         description: [
-            "This medium-difficulty coding problem tests your ability to reconstruct precise event timings from incomplete, periodic snapshots of a running program's call stack. It appears frequently in performance-profiling roles at firms that build trading infrastructure, monitoring systems, or developer tools.",
-            'The core challenge is to infer when functions began and ended execution by comparing consecutive stack snapshots taken at irregular intervals. You must track which functions are entering (appearing for the first time in a stack) and exiting (disappearing from the stack), emit events with correct timestamps, and handle edge cases like empty inputs and programs that start or stop mid-execution. The logic hinges on careful stack comparison: diffing the previous and current stacks to determine which functions are new entries and which have returned.',
-        ],
-    },
-    {
-        id: 'std-any',
-        title: 'std::any: Type Erasure & Small Object Optimization',
-        subtitle:
-            'Zero dynamic allocations for inline buffers with custom vtable dispatch',
-        description: [
-            'In latency-critical trading systems and kernel bypass gateways, runtime polymorphism and dynamic heap allocation in the hot path introduce fatal cache misses and latency jitter. In this problem, you implement a type-erased container modeled on C++17 std::any, engineered with Small Object Optimization (SOO).',
-            'Your container must hold instances of any copy-constructible and movable type. For objects below 32 bytes and matching alignment, construct them in-place within a stack buffer using placement new with zero heap allocation. Larger objects must be allocated on the heap. You must build custom vtable dispatch tables for copying, moving, and destroying values, and implement a type-safe any_cast<T>.',
+            'In low-latency systems and order-matching engines, inter-thread messaging demands deterministic, non-blocking queue structures that avoid OS kernel transitions and heap allocations.',
+            'Implement a single-producer single-consumer (SPSC) ring buffer with head and tail sequence numbers, cache-line padding to prevent false sharing, and memory order semantics that guarantee message visibility across CPU cores.',
         ],
     },
     {
@@ -41,6 +33,16 @@ const DEMO_PROBLEMS: ProblemDemo[] = [
         description: [
             'Order book gateways and matching engines demand deterministic caching layers that evict stale market depth with zero latency jitter. Design an in-memory storage engine that operates as a fixed-capacity Least Recently Used (LRU) cache supporting high-throughput key-value operations.',
             'Both get(key) and put(key, value) must strictly run in O(1) average time. Accessing a key refreshes its recency to the head of the chain. When capacity is exceeded, atomically evict the least recently accessed key without scanning the list. Your engine must avoid memory fragmentation and handle in-place updates without double-counting capacity.',
+        ],
+    },
+    {
+        id: 'two-sum',
+        title: 'Two Sum: Complement Hashing & Single-Pass Optimization',
+        subtitle:
+            'Find two indices whose values sum to a target with O(n) hash lookups',
+        description: [
+            'You are given an array of integers nums and an integer target. Your task is to find two distinct indices i and j in the array such that nums[i] + nums[j] equals target, and return them as a pair.',
+            'Trade memory for speed by maintaining a hash map from value to index as you scan. Each element is inserted and queried at most once, achieving O(n) linear time complexity and avoiding the O(n^2) nested scan trap.',
         ],
     },
 ];
@@ -68,7 +70,7 @@ export default function Welcome() {
                         learn<span className="text-emerald-400">CP</span>
                     </Link>
 
-                    {/* Desktop Right Menu: Enlarged 4 Buttons (problemset, dashboard, leaderboard, docs) */}
+                    {/* Desktop Right Menu: Enlarged 4 Buttons (problemset, tracks, dashboard, docs) */}
                     <div className="pointer-events-auto hidden flex-col items-end gap-2 font-mono text-xs md:flex">
                         <Link
                             href={problemsetRoute()}
@@ -77,16 +79,16 @@ export default function Welcome() {
                             problemset
                         </Link>
                         <Link
+                            href={learnRoute()}
+                            className="w-fit rounded-xl border border-white/20 bg-black/60 px-5 py-2 text-xs font-semibold text-[#FFF9D9] shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/85 sm:text-sm"
+                        >
+                            tracks
+                        </Link>
+                        <Link
                             href={auth.user ? dashboard() : login()}
                             className="w-fit rounded-xl border border-white/20 bg-black/60 px-5 py-2 text-xs font-semibold text-[#FFF9D9] shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/85 sm:text-sm"
                         >
                             dashboard
-                        </Link>
-                        <Link
-                            href={problemsetRoute()}
-                            className="w-fit rounded-xl border border-white/20 bg-black/60 px-5 py-2 text-xs font-semibold text-[#FFF9D9] shadow-md backdrop-blur-md transition-all hover:scale-105 hover:bg-black/85 sm:text-sm"
-                        >
-                            leaderboard
                         </Link>
                         <a
                             href="#pillars"
@@ -124,18 +126,18 @@ export default function Welcome() {
                                     problemset
                                 </Link>
                                 <Link
+                                    href={learnRoute()}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="w-fit rounded-xl border border-white/20 bg-black/85 px-5 py-2.5 font-semibold text-[#FFF9D9] shadow-lg backdrop-blur-xl"
+                                >
+                                    tracks
+                                </Link>
+                                <Link
                                     href={auth.user ? dashboard() : login()}
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="w-fit rounded-xl border border-white/20 bg-black/85 px-5 py-2.5 font-semibold text-[#FFF9D9] shadow-lg backdrop-blur-xl"
                                 >
                                     dashboard
-                                </Link>
-                                <Link
-                                    href={problemsetRoute()}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className="w-fit rounded-xl border border-white/20 bg-black/85 px-5 py-2.5 font-semibold text-[#FFF9D9] shadow-lg backdrop-blur-xl"
-                                >
-                                    leaderboard
                                 </Link>
                                 <a
                                     href="#pillars"
@@ -211,11 +213,11 @@ export default function Welcome() {
                                                     : 'border border-white/20 bg-white/10 text-[#FFF9D9] hover:border-white/30 hover:bg-white/20 hover:text-white'
                                             }`}
                                         >
-                                            {prob.id === 'call-stacks'
-                                                ? 'Call Stacks'
-                                                : prob.id === 'std-any'
-                                                  ? 'std::any'
-                                                  : 'LRU Cache'}
+                                            {prob.id === 'ring-buffer'
+                                                ? 'Ring Buffer'
+                                                : prob.id === 'lru-cache'
+                                                  ? 'LRU Cache'
+                                                  : 'Two Sum'}
                                         </button>
                                     );
                                 })}
@@ -246,13 +248,13 @@ export default function Welcome() {
                                 </div>
                             </div>
 
-                            {/* Centered Read More Button */}
+                            {/* Centered Solve Problem Button */}
                             <div className="mt-6 flex shrink-0 justify-center">
                                 <Link
-                                    href={problemsetRoute()}
+                                    href={problemRoute(selectedProblem.id)}
                                     className="inline-flex items-center justify-center gap-2 rounded-2xl bg-[#FFF9D9] px-10 py-3 font-mono text-xs font-bold tracking-wider text-slate-950 uppercase shadow-xl transition-all hover:scale-105 hover:bg-white active:scale-95"
                                 >
-                                    <span>Read More →</span>
+                                    <span>Solve Problem →</span>
                                 </Link>
                             </div>
                         </div>

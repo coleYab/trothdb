@@ -16,8 +16,8 @@ const tabs: Array<{
     icon: LucideIcon;
 }> = [
     { value: 'description', label: 'Description', icon: FileText },
-    { value: 'editorial', label: 'Editorial', icon: BookOpen },
     { value: 'submissions', label: 'Submissions', icon: Zap },
+    { value: 'editorial', label: 'Editorial', icon: BookOpen },
     { value: 'comments', label: 'Comments', icon: MessageSquare },
     { value: 'standings', label: 'Standings', icon: Trophy },
 ];

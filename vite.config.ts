@@ -44,6 +44,7 @@ export default defineConfig({
     },
     lint: {
         ignorePatterns: [
+            '.github/**',
             'vendor/**',
             'node_modules/**',
             'public/**',

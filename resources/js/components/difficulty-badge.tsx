@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils';
 import type { Difficulty } from '@/types';
 
 const difficultyStyles: Record<Difficulty, string> = {
-    Easy: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400',
-    Medium: 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    Hard: 'border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400',
+    Easy: 'border-emerald-600/30 bg-emerald-600/10 text-emerald-800 dark:text-emerald-400',
+    Medium: 'border-amber-600/30 bg-amber-600/10 text-amber-800 dark:text-amber-400',
+    Hard: 'border-rose-600/30 bg-rose-600/10 text-rose-800 dark:text-rose-400',
 };
 
 export function DifficultyBadge({
@@ -19,7 +19,7 @@ export function DifficultyBadge({
         <Badge
             variant="outline"
             className={cn(
-                'font-medium',
+                'rounded-sm font-mono text-[10px] font-medium tracking-wide uppercase',
                 difficultyStyles[difficulty],
                 className,
             )}

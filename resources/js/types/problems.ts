@@ -8,6 +8,12 @@ export type ProblemSummary = {
     acceptance_rate: number;
     tags: string[];
     summary: string;
+    discipline?: string;
+    topic?: string;
+    companies?: string[];
+    solved?: boolean;
+    total_points?: number;
+    time_limit_ms?: number;
 };
 
 export type ProblemExample = {
